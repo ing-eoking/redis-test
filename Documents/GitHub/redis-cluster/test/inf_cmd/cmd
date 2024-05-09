@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+use IO::Socket::INET;
+
+my ($ip, $port) = @ARGV;
+my $sock = new IO::Socket::INET (
+PeerAddr   => "$ip:$port",
+Proto      => 'tcp'
+);
+
+my $pid_path = __FILE__;
+$pid_path =~ s/\/cmd/\/pid/;
+
+open (PID, ">$pid_path");
+printf PID "$$";
+close(PID);
+
+while (1) {
+    for($i=0; $i<10000000; $i++) {
+        $sock->send("set i$i $i\n");
+    }
+    for($i=0; $i<10000000; $i++) {
+        $sock->send("set j$i $i\n");
+    }
+}
