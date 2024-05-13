@@ -1,0 +1,40 @@
+services:
+  master:
+    image: redis:latest
+    container_name: master
+    ports:
+      - 6379:6379
+  slave:
+    image: redis:latest
+    deploy:
+      replicas: 2
+    privileged: true
+    ports:
+      - "6380-6381:6379"
+    volumes:
+      - ./conf:/usr/local/etc/redis/
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apt update
+        apt-get -y install iproute2
+        cp /usr/local/etc/redis/redis.conf /tmp/redis.conf
+        redis-server /tmp/redis.conf
+  sentinel:
+    image: 'bitnami/redis-sentinel:latest'
+    deploy:
+      replicas: 3
+    depends_on:
+      - master
+      - slave
+    ports:
+      - "6479-6481:6379"
+    volumes:
+      - ./conf:/usr/local/etc/redis/
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cp /usr/local/etc/redis/sentinel.conf /tmp/sentinel.conf
+        redis-server /tmp/sentinel.conf --sentinel
